@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  smart_dairy_app:
+    build: .
+    container_name: smart_dairy_portal
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://dairy_admin:dairy_secret_2026@postgres_db:5432/smart_dairy_db
+      - SECRET_KEY=smart-dairy-production-super-secret-key-change-me
+      - PORT=8000
+      - HOST=0.0.0.0
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    volumes:
+      - dairy_data:/app/data
+
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: smart_dairy_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dairy_admin
+      POSTGRES_PASSWORD: dairy_secret_2026
+      POSTGRES_DB: smart_dairy_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dairy_admin -d smart_dairy_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  dairy_data:
